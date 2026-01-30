@@ -1,0 +1,28 @@
+---
+import { getCollection } from "astro:content";
+import Main from "@/layouts/Main.astro";
+import Layout from "@/layouts/Layout.astro";
+import Tag from "@/components/Tag.astro";
+import Header from "@/components/Header.astro";
+import Footer from "@/components/Footer.astro";
+import getUniqueTags from "@/utils/getUniqueTags";
+import { SITE } from "@/config";
+import { getPostsByLang, t } from "@/i18n";
+
+const ui = t("zh");
+
+const posts = await getCollection("blog");
+const zhPosts = getPostsByLang(posts, "zh");
+
+let tags = getUniqueTags(zhPosts);
+---
+
+<Layout title={`${ui.tags} | ${SITE.title}`} lang="zh">
+  <Header lang="zh" />
+  <Main pageTitle={ui.tags} pageDesc="文章中使用的所有标签。">
+    <ul class="flex flex-wrap gap-6">
+      {tags.map(({ tag, tagName }) => <Tag {tag} {tagName} />)}
+    </ul>
+  </Main>
+  <Footer />
+</Layout>

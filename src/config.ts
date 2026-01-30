@@ -1,0 +1,23 @@
+export const SITE = {
+  website: "https://jsl-blog.pages.dev/",
+  author: "JSL",
+  profile: "https://github.com/jsl9208",
+  desc: "Shilong's Tech — AI Agent, AI Infra, B2B ML platforms, big data & analytics",
+  title: "Shilong's Tech",
+  ogImage: "astropaper-og.jpg",
+  lightAndDarkMode: true,
+  postPerIndex: 4,
+  postPerPage: 8,
+  scheduledPostMargin: 15 * 60 * 1000,
+  showArchives: true,
+  showBackButton: true,
+  editPost: {
+    enabled: false,
+    text: "",
+    url: "",
+  },
+  dynamicOgImage: true,
+  dir: "ltr",
+  lang: "en",
+  timezone: "Asia/Shanghai",
+} as const;

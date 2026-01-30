@@ -1,0 +1,34 @@
+---
+import type { Locale } from "@/i18n";
+import { DEFAULT_LOCALE, getLangLabel } from "@/i18n";
+
+type Props = {
+  lang?: Locale;
+};
+
+const { lang = DEFAULT_LOCALE } = Astro.props;
+const { pathname } = Astro.url;
+
+const otherLang: Locale = lang === "en" ? "zh" : "en";
+
+function getAlternateUrl(currentPath: string, fromLang: Locale, toLang: Locale): string {
+  if (fromLang === "en" && toLang === "zh") {
+    return `/zh${currentPath}`;
+  }
+  if (fromLang === "zh" && toLang === "en") {
+    return currentPath.replace(/^\/zh/, "") || "/";
+  }
+  return currentPath;
+}
+
+const alternateUrl = getAlternateUrl(pathname, lang, otherLang);
+---
+
+<a
+  href={alternateUrl}
+  class="focus-outline px-2 py-1 text-sm font-medium hover:text-accent"
+  title={`Switch to ${getLangLabel(otherLang)}`}
+  aria-label={`Switch to ${getLangLabel(otherLang)}`}
+>
+  {getLangLabel(otherLang)}
+</a>

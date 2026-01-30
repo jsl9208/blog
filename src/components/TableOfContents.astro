@@ -1,0 +1,51 @@
+---
+type Heading = {
+  depth: number;
+  slug: string;
+  text: string;
+};
+
+export interface Props {
+  headings: Heading[];
+}
+
+const { headings } = Astro.props;
+
+const toc = headings.filter((h) => h.depth === 2 || h.depth === 3);
+---
+
+<nav id="toc-nav" class="text-sm text-foreground/60 leading-6 relative">
+  <h2 class="font-bold text-foreground mb-4 tracking-wider">目录</h2>
+  <ul class="flex flex-col border-l border-border/50 relative">
+    {
+      toc.map((heading) => (
+        <li>
+          <a
+            href={`#${heading.slug}`}
+            class:list={[
+              "block w-full py-1 transition-colors duration-200 hover:text-foreground focus-visible:text-accent focus-visible:outline-none border-l-2 border-transparent -ml-[1px]",
+              {
+                "pl-4": heading.depth === 2,
+                "pl-8": heading.depth === 3,
+              },
+            ]}
+            aria-label={heading.text}
+          >
+            {heading.text}
+          </a>
+        </li>
+      ))
+    }
+  </ul>
+</nav>
+
+<style>
+  /* Active state class to be toggled by JS */
+  :global(.toc-active) {
+    color: var(--accent);
+    font-weight: 500;
+    border-left-color: var(--accent);
+    /* bg-accent/5 approximation */
+    background-color: color-mix(in srgb, var(--accent), transparent 95%);
+  }
+</style>
