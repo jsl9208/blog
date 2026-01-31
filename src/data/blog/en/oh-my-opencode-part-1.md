@@ -45,7 +45,7 @@ In OMO, this command triggers an entire orchestration chain. Let's see what happ
 
 ---
 
-## Step 1: Sisyphus Receives the Request
+## Request Classification: Sisyphus's Intent Gate
 
 The user's message first passes through the `chat.message` hook chain. The keyword detector (`keywordDetector`) scans the content, and a context injector pulls in the project's `AGENTS.md` and related rule files.
 
@@ -83,7 +83,7 @@ Decision -> Clarify: Ambiguous
 
 ---
 
-## Step 2: Prometheus Designs the Plan
+## Plan Generation: Prometheus's Three-Phase Workflow
 
 **Prometheus** is the "architect" here. It doesn't handle concrete code tasks — it only produces blueprints.
 
@@ -139,7 +139,7 @@ A few key design choices to note: Prometheus uses **Waves** (not Phases) to orga
 
 ---
 
-## Step 3: Parallel Exploration
+## Parallel Exploration: Explore and Librarian
 
 While Prometheus is planning, Sisyphus has already launched two exploration agents in the background:
 
@@ -172,7 +172,7 @@ Explore and Librarian are launched via `delegate_task` with `run_in_background: 
 
 ---
 
-## Step 4: Junior Takes the Stage
+## Task Execution: Sisyphus-Junior and delegate_task
 
 With the plan ready and exploration results in hand, Sisyphus begins delegating tasks by phase.
 
@@ -201,7 +201,7 @@ Junior starts writing code. The `tool.execute.before` hook performs environment 
 
 ---
 
-## Step 5: Self-Healing After a Crash
+## Error Recovery: edit-error-recovery and Phase 2C
 
 Junior uses an incorrect import path while writing the auth middleware, and the Edit tool fails with `oldString not found`.
 
@@ -218,7 +218,7 @@ Worth noting: Phase 2C is **purely prompt-based** — there's no programmatic co
 
 ---
 
-## Step 6: Calling in the Oracle
+## Advanced Diagnosis: Oracle Intervenes
 
 **Oracle** is the most expensive agent in the system (marked as `EXPENSIVE`), used for high-difficulty debugging and architectural decisions. It's read-only — it cannot modify files or delegate tasks.
 
@@ -228,7 +228,7 @@ Oracle analyzes Junior's three failed attempts and provides a root-cause diagnos
 
 ---
 
-## Step 7: Ralph Loop — Until It Passes
+## Continuous Assurance: Ralph Loop and Todo Continuation
 
 Throughout the task, two background mechanisms are constantly running:
 
@@ -245,7 +245,7 @@ Please continue your work.
 
 ---
 
-## Step 8: Delivery
+## Final Verification and Delivery
 
 All phases complete. Sisyphus performs final verification:
 

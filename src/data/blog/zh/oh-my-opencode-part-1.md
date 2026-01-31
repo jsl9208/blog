@@ -45,7 +45,7 @@ OMO 在此基础上主要做了一件事：**把单 Agent 助手变成了一个�
 
 ---
 
-## 第一步：Sisyphus 接管请求
+## 请求分类：Sisyphus 的 Intent Gate
 
 用户的消息首先经过 `chat.message` Hook 链。关键词检测器（`keywordDetector`）扫描内容，Context Injector 将当前项目的 `AGENTS.md` 和相关规则文件注入到对话中。
 
@@ -83,7 +83,7 @@ direction: down
 
 ---
 
-## 第二步：让 Prometheus 出方案
+## 计划生成：Prometheus 的三阶段工作流
 
 **Prometheus** 是这里的“架构师”。它不负责具体代码任务，只管出蓝图。
 
@@ -139,7 +139,7 @@ Wave 2 (After Wave 1):
 
 ---
 
-## 第三步：一边规划，一边探索
+## 并行探索：Explore 与 Librarian
 
 在 Prometheus 规划的同时，Sisyphus 已经在后台并行启动了两个探索 Agent：
 
@@ -172,7 +172,7 @@ Explore 和 Librarian 是通过 `delegate_task` 以 `run_in_background: true` �
 
 ---
 
-## 第四步：派 Junior 进场
+## 任务执行：Sisyphus-Junior 与 delegate_task
 
 计划就绪，探索结果也回来了。Sisyphus 开始按阶段委派执行任务。
 
@@ -200,7 +200,7 @@ Junior 开始写代码。`tool.execute.before` Hook 在每次工具调用前做�
 
 ---
 
-## 第五步：翻车后的自愈机制
+## 错误恢复：edit-error-recovery 与 Phase 2C
 
 Junior 在写 auth 中间件时用了错误的导入路径，Edit 工具报错 `oldString not found`。
 
@@ -217,7 +217,7 @@ Junior 在写 auth 中间件时用了错误的导入路径，Edit 工具报错 `
 
 ---
 
-## 第六步：请出“扫地僧” Oracle
+## 高级诊断：Oracle 介入
 
 **Oracle** 的身份是系统中最贵的 Agent（标记为 EXPENSIVE），用于高难度调试和架构决策。它只有只读权限，不能修改文件也不能委派任务。
 
@@ -227,7 +227,7 @@ Oracle 分析了 Junior 之前的三次失败尝试，给出了根因诊断和�
 
 ---
 
-## 第七步：Ralph Loop：直到跑通为止
+## 持续保障：Ralph Loop 与 Todo Continuation
 
 整个任务过程中，有两个后台机制在持续运作：
 
@@ -244,7 +244,7 @@ Please continue your work.
 
 ---
 
-## 第八步：收工交付
+## 最终验证与交付
 
 所有阶段完成。Sisyphus 执行最终验证：
 
