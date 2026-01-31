@@ -15,19 +15,9 @@ description: "A walkthrough of a complete development scenario showing how OMO's
 
 ## Background
 
-Heywhale has been facing some business challenges recently. Budgets are tightening and the engineering team is unlikely to grow, yet as a business whose core products and services target key accounts, the workload only increases. This pressure forced me to rethink how our entire team works — not at the level of "using Copilot for code completion" or "LLM-assisted code review," but something more fundamental: is there a system that enables an entire team to collaborate deeply with AI, or even build an AI team to supplement capacity? With that question in mind, I took a deep dive into Oh My OpenCode and found its multi-agent orchestration far more mature than I expected, with many fascinating design decisions and implementations. So I decided to write this series to break down OMO's design and share my understanding and thoughts.
+I've been a loyal Claude Code user, until [OpenCode](https://github.com/anomalyco/opencode) + Oh My OpenCode (hereafter OMO) came along and noticeably boosted my daily development productivity. OpenCode is an open-source AI coding assistant very similar to Claude Code, but with extreme extensibility; OMO is its plugin, implementing a multi-agent orchestration system on top of it. After diving into the source code, I found its multi-agent orchestration far more mature than I expected, with many elegant design decisions worth studying.
 
-Oh My OpenCode (hereafter OMO) is a plugin for [OpenCode](https://github.com/anomalyco/opencode). OpenCode is an open-source AI coding assistant similar to Claude Code, but with extreme extensibility. As an open-source project, it also offers more room for experimentation and research.
-
-What OMO does on top of this is one thing: **it transforms a single-agent assistant into a multi-agent orchestration platform**. I was genuinely shocked by its capabilities in my recent projects. Out of curiosity, I read the source code from top to bottom, and this series is my teardown notes.
-
-- **10+ Specialized AI Agents**, each with unique models, roles, and permissions
-- **20+ Custom Tools**, ranging from LSP analysis to task delegation to background concurrency
-- **32+ Lifecycle Hooks**, covering error recovery, context injection, and automatic continuation
-- **Claude Code Compatibility Layer**, seamless integration with the existing ecosystem
-- **Tmux Integration**, real-time visualization of background agents
-
-In this series, I won't just talk about architecture and source code in the abstract. Instead, I'll walk through a real scenario to show OMO's design philosophy and runtime logic.
+Meanwhile, Heywhale has been facing some business challenges. Budgets are tightening and the engineering team is unlikely to grow, yet as a business whose core products and services target key accounts, the workload only increases. This pressure forced me to rethink how our entire team works — not at the level of "using Copilot for code completion" or "LLM-assisted code review," but something more fundamental: is there a system that enables an entire team to collaborate deeply with AI, or even build an AI team to supplement capacity? OMO's multi-agent orchestration architecture gave me exactly that inspiration. So I decided to write this series to break down OMO's design and share my understanding and thoughts.
 
 ---
 

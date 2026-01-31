@@ -15,19 +15,11 @@ description: "通过一个完整的开发场景，展示 OMO 多 Agent 协作系
 
 ## 背景
 
-最近一段时间，Heywhale 在经营上遇到了一些挑战。预算收紧，研发团队不太可能再扩大规模，但作为核心产品和服务都是面向 KA 的业务，要做的事情只会增加不会减少。这种压力逼着我重新审视整个团队和工作方式 —— 不是那种 “用 Copilot 补全代码” 和 “LLM 辅助 code review” 的程度，而是：有没有一套系统，能让整个团队充分与 AI 协作，甚至构建一个 AI team 来补充产能？带着这个问题，我对 Oh My OpenCode 进行了深入的研究，发现它在多 Agent 协作编排上远比我预期的成熟，也有很多有趣的设计和实现。于是决定写这个系列，拆解 OMO 的设计，分享我的理解和思考。
+我一直是 Claude Code 的忠实用户，直到 [OpenCode](https://github.com/anomalyco/opencode) + Oh My OpenCode（以下简称 OMO）这套组合出现，日常开发效率明显提升。OpenCode 是一个开源 AI 编码助手，与 Claude Code 非常相似，但可扩展性极强；OMO 是它的 Plugin，在此基础上实现了一套多 Agent 协同编排系统。深入源码后，我发现它在多 Agent 协作编排上远比我预期的成熟，有很多精巧的设计值得琢磨。
 
-Oh My OpenCode（以下简称 OMO）是一个 [OpenCode](https://github.com/anomalyco/opencode) Plugin。OpenCode 是一个开源 AI 编码助手，类似 Claude Code，不同的是它的可扩展性极强。作为开源项目，它也有更多的可玩性和研究价值。
+而最近 Heywhale 在经营上遇到了一些挑战。预算收紧，研发团队不太可能再扩大规模，但作为核心产品和服务都是面向 KA 的业务，要做的事情只会增加不会减少。
 
-OMO 在此基础上主要做了一件事：**把单 Agent 助手变成了一个多 Agent 协同编排平台**。在我最近的项目里我有一点被它的能力 shocked，出于好奇把源码从头到尾读了一遍，这个系列就是读完之后的拆解记录。
-
-- **10+ 个专用 AI Agent**，各自有不同的模型、角色和权限
-- **20+ 自定义 Tools**，从 LSP 分析到任务委派到后台并发
-- **32+ Lifecycle Hooks**，覆盖错误恢复、Context 注入、自动续接
-- **Claude Code 兼容层**，现有生态无缝接入
-- **Tmux 集成**，后台 Agent 可视化
-
-这个系列我不打算空谈架构和源码，而是从一个真实场景切入，带大家看看 OMO 的设计哲学和运行逻辑。
+这种压力逼着我重新审视整个团队的工作方式 —— 不是那种"用 Copilot 补全代码"和"LLM 辅助 code review"的程度，而是：有没有一套系统，能让整个团队充分与 AI 协作，甚至构建一个 AI team 来补充产能？OMO 的多 Agent 编排架构恰好给了我启发。于是决定写这个系列，拆解 OMO 的设计，分享我的理解和思考。
 
 ---
 
