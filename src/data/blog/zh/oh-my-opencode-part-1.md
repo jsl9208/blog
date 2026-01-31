@@ -17,7 +17,11 @@ description: "通过一个完整的开发场景，展示 OMO 多 Agent 协作系
 
 Claude Code 的能力大家并不陌生，很长时间我一直是它的忠实用户。直到近期 [OpenCode](https://github.com/anomalyco/opencode) + Oh My OpenCode（以下简称 OMO）这套组合出现，又一次升级了我的工作流和工作效率。
 
-除了个人感受之外，促使我开始动笔写博客的更重要的原因，是最近在公司经营上遇到的一些挑战，让我重新审视了整个团队的工作方式，不是停留在"用 Copilot 补全代码"和"LLM 辅助 code review"的层面，而是：有没有一套系统，能让整个团队充分与 AI 协作，甚至构建一个 AI team 来补充产能？我深入研究了 OMO 这套基于 OpenCode 搭建的系统，在多 Agent 协作编排上远比我预期的成熟，有很多精巧的设计值得琢磨和借鉴。这给了我一些启发，于是决定写这个系列，拆解 OMO 的设计，分享我的理解和思考。
+另一个促使我开始动笔写博客的原因，是最近在公司经营上遇到的一些挑战，让我重新审视了整个团队的工作方式，不是停留在"用 Copilot 补全代码"和"LLM 辅助 code review"的层面，而是如何构建一套系统，能让整个团队充分与 AI 协作，甚至构建一个 Full-AI team 来补充产能。
+
+说句题外话，随着近两年 LLM 的编码能力和一致性的提升，以及像 Cursor 和 CC 这样的 Agent 助手的能力涌现，我能明显感觉到软件开发的本质正在发生变化。而在技术管理层面，我们也需要重新思考"团队"的定义和构成，如何让人类开发者与 AI 助手协同工作，如何设计工作流以最大化双方的优势。2025 年初我在内部提出过将来的开发任务可能大部分都会是 "0人天" 的想法，随着短短一年时间看到 Agent 突飞猛进的进化速度，我有强烈的幻想即将成为现实的预感。
+
+回到正题，我花了几天深入研究了 OMO 这套基于 OpenCode 搭建的系统，发现它在多 Agent 协作编排上远比我预期的成熟，有很多精巧的设计值得琢磨和借鉴。这给了我一些启发，于是决定写这个系列，拆解 OMO 的设计，一方面作为自身学习的整理，另一方面是作为 "0人天" AI team 的构建起点。
 
 ---
 
@@ -29,7 +33,7 @@ Claude Code 的能力大家并不陌生，很长时间我一直是它的忠实�
 帮我给这个项目加上 JWT 认证，包括注册、登录和中间件
 ```
 
-在普通的 AI 编码助手里，这会触发一次 LLM 调用。模型会尝试一口气把所有代码写出来，结果好不好有一定的运气成分，往往需要比较多的人工干预和反馈。
+在普通的 Coding Agent 工作逻辑下，这会触发一次 LLM 调用。模型会尝试一口气把所有代码写出来，结果好不好有一定的运气成分，往往需要比较多的人工干预和反馈。
 
 在 OMO 里，这条指令触发的是一整条协作链。我们来看看这背后的逻辑。
 
@@ -41,7 +45,7 @@ Claude Code 的能力大家并不陌生，很长时间我一直是它的忠实�
 
 处理完毕后，消息到达主 Agent **Sisyphus**。
 
-_名字来自希腊神话中永远推巨石上山的西西弗斯。OMO 作者的 [解释](https://github.com/code-yeongyu/oh-my-opencode/blob/839a4c53169d33bfe702cc3b1f241983b0df7823/README.md#L187-L191) 是：Agent 每天都在"推动"思维，和人类开发者没什么不同。这个隐喻也延伸到了实现层——工作计划叫 `boulder`（巨石），Todo Continuation Enforcer 确保 Agent 不会半途而废。_
+_名字来自希腊神话中永远推巨石上山的西西弗斯。OMO 作者的[解释](https://github.com/code-yeongyu/oh-my-opencode/blob/839a4c53169d33bfe702cc3b1f241983b0df7823/README.md#L187-L191)是：Agent 每天都在"推动"思维，和人类开发者没什么不同。这个隐喻也延伸到了实现层：工作计划叫 `boulder`（巨石），还有一套严格的机制确保 Agent 不会半途而废，很有意思。_
 
 Sisyphus 的角色是 Orchestrator，不是执行者。它的 [System Prompt](https://github.com/code-yeongyu/oh-my-opencode/blob/839a4c53169d33bfe702cc3b1f241983b0df7823/src/agents/sisyphus.ts#L92) 里写得很清楚：
 
@@ -75,17 +79,17 @@ direction: down
 
 ## 计划生成：Prometheus 的三阶段工作流
 
-**Prometheus** 是这里的“架构师”。它不负责具体代码任务，只管出蓝图。
+**Prometheus** 是这里的“架构师”。它不负责具体代码任务，只管产出蓝图（即带有 Todo 的结构化计划）。
 
 它的工作流分三个阶段：
 
 1. **访谈阶段**：检查任务是否有足够信息。如果不够，它会自动触发 Explore 去搜索项目结构。
-2. **计划生成**：把任务拆成逻辑独立的阶段，为每个阶段指定执行 Agent 的类别和所需技能。
+2. **计划生成**：把任务拆成逻辑独立的阶段，为每个阶段指定执行 Agent 的类别和所需 Skills。
 3. **精炼与审核**：将草案提交给 Momus（审核 Agent）进行严苛的评审，根据反馈迭代（可能很多轮）。
 
 Prometheus 受到一个硬约束：`prometheus-md-only` Hook 强制限制它只能写 `.md` 文件，不能碰任何代码文件。这从根本上隔离了规划与执行。
 
-_Hook 是 OpenCode [Plugin API](https://github.com/anomalyco/opencode/blob/aef0e58ad7c8fc299ac7bdf0bb63a54d6ab878e3/packages/plugin/src/index.ts#L148-L226) 中的生命周期拦截机制，类似 Git Hooks，在特定事件前后自动触发。OMO 利用这套 API 实现了 30+ 个 Hook，后续文章会展开。这里先记住：OpenCode 提供机制，OMO 提供策略。_
+_Hook 是 OpenCode [Plugin API](https://github.com/anomalyco/opencode/blob/aef0e58ad7c8fc299ac7bdf0bb63a54d6ab878e3/packages/plugin/src/index.ts#L148-L226) 中的生命周期拦截机制，类似 Git Hooks，在特定事件前后自动触发。OMO 利用这套 API 实现了 30+ 个 Hook，后续我们再深入研究。这里先记住：OpenCode 提供机制，OMO 在其之上构建策略。_
 
 最终输出的计划是一个[结构化的 Markdown 文档](https://github.com/code-yeongyu/oh-my-opencode/blob/839a4c53169d33bfe702cc3b1f241983b0df7823/src/agents/prometheus-prompt.ts#L861-L1194)，保存在 `.sisyphus/plans/` 目录下，大致结构如下（简化版）：
 
@@ -127,9 +131,9 @@ Wave 2 (After Wave 1):
 
 注意几个关键设计：
 
-- 用 **Wave（波次）** 而不是 Phase 来组织并行执行。
-- 每个任务都带有推荐的 **Agent Profile**（category + skills）。
-- 验收标准必须是 **Agent 可自动执行的**，不允许出现"用户手动验证"这类描述。
+- 系统里对任务阶段的称呼是 **Wave（波次）**。
+- 每个任务都带有推荐的 **Agent Profile**（Category + Skills）。
+- 验收标准必须是 **Agent 可自动执行的**（禁止"用户手动验证"类描述）。
 
 ---
 
@@ -160,7 +164,7 @@ const AGENT_RESTRICTIONS = {
 };
 ```
 
-这种 **读写分离** 的设计非常关键，限制 Agent 的权限范围，从机制上杜绝副作用。在 OMO 里，只有 Sisyphus 和 Sisyphus-Junior 能动代码，其余 Agent 全部只读。
+这种 **读写分离** 的设计非常关键，限制 Agent 的权限范围，从机制上杜绝副作用。在 OMO 里，只有 Sisyphus 和 Sisyphus-Junior 能动代码，其余 Agent 全部是只读的。
 
 Explore 和 Librarian 是通过 `delegate_task` 以 `run_in_background: true` 模式启动的。OMO 实现了一套[并发管理器](https://github.com/code-yeongyu/oh-my-opencode/blob/839a4c53169d33bfe702cc3b1f241983b0df7823/src/features/background-agent/concurrency.ts)，为每个 Provider/Model 组合维护独立的计数信号量，比如限制 Anthropic 最多 3 个并发、Opus 最多 2 个。超出上限的任务自动排队等待 slot 释放，以此防止 API 限流和费用失控。
 
@@ -168,7 +172,7 @@ Explore 和 Librarian 是通过 `delegate_task` 以 `run_in_background: true` �
 
 ## 任务执行：Sisyphus-Junior 与 delegate_task
 
-计划就绪，探索结果也回来了。Sisyphus 开始按阶段委派执行任务。
+等到计划就绪和探索结果成功返回，Sisyphus 会开始按阶段委派执行任务。
 
 每个子任务通过 `delegate_task` 分发给 **Sisyphus-Junior**，并携带 `category`（任务类型）和 `load_skills`（技能注入）：
 
@@ -213,18 +217,20 @@ Junior 在写 auth 中间件时用了错误的导入路径，Edit 工具报错 `
 3. **记录**所有尝试过的修复方案
 4. **咨询 Oracle**
 
-值得注意的是，Phase 2C 是**纯 prompt 层面的约定**——系统没有编程计数器来追踪失败次数，也没有强制执行"3 次后停止"的结构化机制。它依赖 LLM 的自律来遵守这套规则。OMO 当前设计中 prompt 工程与结构化约束并存：前者灵活但不可靠，后者刚性但覆盖面有限。
+值得注意的是，Phase 2C 是**纯 prompt 层面的约定**——系统没有编程计数器来追踪失败次数，也没有强制执行"3 次后停止"的结构化机制。它依赖 LLM 的自律来遵守这套规则。
+
+OMO 当前设计中 prompt 工程与结构化约束并存：前者灵活但不可靠，后者刚性但覆盖面有限。我认为这里有提升空间，未来可以在 delegate_task 层面引入更结构化的错误汇报和状态机。
 
 ---
 
 ## 高级诊断：Oracle 介入
 
-**Oracle** 是系统中最贵的 Agent（标记为 EXPENSIVE），用于高难度调试和架构决策。它只有只读权限，不能修改文件也不能委派任务。它的 System Prompt 写得很直白：「Dense and useful beats long and thorough」，不要面面俱到的分析，要能直接落地的建议。
+**Oracle** 是系统中最贵的 Agent（标记为 EXPENSIVE），用于高难度调试和架构决策。它只有只读权限，不能修改文件也不能委派任务。它的 System Prompt 写得很直白：「Dense and useful beats long and thorough」，不要仅停留在分析层面，要能直接落地的建议。
 
 Oracle 的输出遵循三层结构，每层有明确的触发条件：
 
 - **Essential / 核心**（必须包含）：结论（2-3 句）+ 行动计划 + 工作量估算
-- **Expanded / 展开**（相关时包含）：选择该方案的理由 + 需要注意的风险与边缘情况
+- **Expanded / 展开**（视情况包含）：选择该方案的理由 + 需要注意的风险与边缘情况
 - **Edge cases / 边缘场景**（确实需要时）：升级触发条件 + 备选方案草图
 
 其中工作量估算使用四级标注：`Quick(<1h)`、`Short(1-4h)`、`Medium(1-2d)`、`Large(3d+)`，让下游 Agent 在执行前就能预判工作量。
@@ -232,7 +238,7 @@ Oracle 的输出遵循三层结构，每层有明确的触发条件：
 Oracle 的调用方式也有几个值得注意的设计：
 
 - **只有 Sisyphus 能调用**：Junior 的 `call_omo_agent` 只允许 explore 和 librarian，Oracle 必须通过 `delegate_task(subagent_type="oracle")` 调用，而这个工具在 Junior 身上是被禁用的。这意味着"请教高人"这个决策权只在 Orchestrator 手里。
-- **始终同步执行**：不同于 explore/librarian 的后台异步模式，Oracle 调用是 `run_in_background: false`，Sisyphus 会停下来等结果。昂贵但必要，因为后续决策依赖 Oracle 的判断。
+- **始终同步执行**：不同于 explore/librarian 的后台异步模式，Oracle 调用是 `run_in_background: false`，Sisyphus 会停下来等结果，因为后续决策依赖 Oracle 的判断。
 - **唯一需要「先宣布」的 Agent**：Sisyphus 在调用 Oracle 前必须先说「Consulting Oracle for [reason]」。系统中所有其他工作都是直接开始不做预告，只有 Oracle 例外，这给了用户对高成本操作的可见性。
 
 回到我们的场景：Oracle 分析了 Junior 之前的三次失败尝试，给出了根因诊断和修复路径。Sisyphus 将诊断结果作为上下文，重新委派 Junior 执行修复。这次 Junior 有了明确的根因和修复路径，顺利通过。
@@ -244,6 +250,8 @@ Oracle 的调用方式也有几个值得注意的设计：
 整个任务过程中，有两个后台机制在持续运作：
 
 **Todo Continuation Enforcer**：检查 Todo 列表，如果发现有未完成的任务项，自动重新激活 Agent 继续工作。这确保 Agent 不会在任务完成到一半时就停下来。
+
+对 Todo 的严格管理是 OMO 保持任务连贯性的重要原因，尤其在 context window 不够用需要 compact，或者切换到新 session 时，Todo 列表充当了跨 session 的状态锚点。
 
 ```text
 [SYSTEM DIRECTIVE: OH-MY-OPENCODE - TODO_CONTINUATION]
@@ -272,7 +280,7 @@ Please continue your work.
 
 ## 系统全景
 
-回顾整个流程：
+执行流程：
 
 ```d2
 shape: sequence_diagram
@@ -301,7 +309,7 @@ Junior -> Sisyphus: 完成
 Sisyphus -> 用户: 全部完成
 ```
 
-回顾整个流程，可以清晰看到 OpenCode 与 OMO 的分工边界——**OpenCode 提供机制，OMO 提供策略**：
+回顾整个流程，可以清晰看到 OpenCode 与 OMO 的分工边界：**OpenCode 提供机制，OMO 提供策略**。
 
 | OpenCode 提供的机制             | OMO 在其上构建的策略                                          |
 | ------------------------------- | ------------------------------------------------------------- |
@@ -317,4 +325,6 @@ Sisyphus -> 用户: 全部完成
 
 ## 接下来
 
-本篇主要是带大家过了一遍 OMO 的标准工作流程。下一篇我们会深入 `delegate_task` 的细节：Sisyphus 每次委派任务时构造了怎样的 prompt，又有哪些结构化的手段来控制子 Agent 的行为边界。
+本篇主要是带大家过了一遍 OMO 的标准工作流程。我们可以看出 OMO 整套系统针对多 Agent 的协作场景的问题痛点理解很深，为其构建了有效的分层设计、工作策略，也进行了很多细节上的工程优化。
+
+下一篇我打算深入 `delegate_task` 的细节：Sisyphus 每次委派任务时构造了怎样的 prompt，又有哪些结构化的手段来控制子 Agent 的行为边界。我认为它是 OMO 多 Agent 协作的核心枢纽，理解它有助于我们更好地设计自己的多 Agent 系统。

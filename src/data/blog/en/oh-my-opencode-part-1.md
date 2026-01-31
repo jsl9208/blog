@@ -17,7 +17,11 @@ description: "A walkthrough of a complete development scenario showing how OMO's
 
 Claude Code's capabilities are no secret, and I was a loyal user for a long time. That is, until the combination of [OpenCode](https://github.com/anomalyco/opencode) and Oh My OpenCode (hereafter OMO) came along and once again upgraded my workflow and productivity.
 
-Beyond personal experience, the more important reason I started this blog is the recent business challenges we've faced. They forced me to rethink how our entire team works — not just at the level of "using Copilot for code completion" or "LLM-assisted code review," but something more fundamental: is there a system that enables an entire team to collaborate deeply with AI, or even build an AI team to supplement capacity? My deep dive into OMO, a system built on top of OpenCode, revealed a multi-agent orchestration architecture far more mature than I expected, with many elegant designs worth studying. This gave me the inspiration to start this series, breaking down OMO's design and sharing my understanding and thoughts.
+Beyond personal experience, the more important reason I started this blog is the recent business challenges we've faced. They forced me to rethink how our entire team works — not just at the level of "using Copilot for code completion" or "LLM-assisted code review," but something more fundamental: how to build a system that enables an entire team to collaborate deeply with AI, or even build a Full-AI team to supplement capacity.
+
+As a side note, with the improvement in LLM coding capabilities and consistency over the past two years, and the emergence of agentic assistants like Cursor and Claude Code, I can clearly feel the essence of software development changing. At the technical management level, we also need to rethink the definition and composition of a "team"—how human developers and AI assistants collaborate, and how to design workflows to maximize the strengths of both. In early 2025, I proposed internally that most development tasks might eventually become "0-person-day" tasks. Seeing the rapid evolution of agents in just a year, I have a strong feeling this fantasy is becoming reality.
+
+Back to the topic, I spent a few days diving deep into OMO, a system built on top of OpenCode, and found its multi-agent orchestration architecture to be far more mature than I expected, with many elegant designs worth studying. This gave me the inspiration to start this series, breaking down OMO's design—both as a way to organize my own learning and as a starting point for building a "0-person-day" AI team.
 
 ---
 
@@ -29,7 +33,7 @@ Imagine you are developing a web application and need to add user authentication
 Add JWT authentication to this project, including registration, login, and middleware.
 ```
 
-In common AI coding assistants, this would trigger a single LLM call. The model would try to write all the code at once — the quality often depends on luck, often requiring significant manual intervention and feedback.
+Under a typical Coding Agent's working logic, this would trigger a single LLM call. The model would try to write all the code at once — the quality often depends on luck, often requiring significant manual intervention and feedback.
 
 In OMO, this command triggers an entire orchestration chain. Let's see what happens behind the scenes.
 
@@ -41,7 +45,7 @@ The user's message first passes through the `chat.message` hook chain. The keywo
 
 Once processed, the message reaches the primary agent **Sisyphus**.
 
-_The name comes from Greek mythology — Sisyphus, condemned to roll a boulder uphill for eternity. As the OMO author explains in the [README](https://github.com/code-yeongyu/oh-my-opencode/blob/839a4c53169d33bfe702cc3b1f241983b0df7823/README.md#L187-L191): LLM agents "push" their thinking every day, not so different from human developers. The metaphor extends into the implementation — the agent's work plan is literally called a `boulder`, and the Todo Continuation Enforcer ensures the agent never quits halfway._
+_The name comes from Greek mythology — Sisyphus, condemned to roll a boulder uphill for eternity. As the OMO author explains in the [README](https://github.com/code-yeongyu/oh-my-opencode/blob/839a4c53169d33bfe702cc3b1f241983b0df7823/README.md#L187-L191): LLM agents "push" their thinking every day, not so different from human developers. The metaphor extends into the implementation — the agent's work plan is called a `boulder`, and there's a strict mechanism ensuring the agent never quits halfway — quite interesting._
 
 Sisyphus is an orchestrator, not an executor. Its [system prompt](https://github.com/code-yeongyu/oh-my-opencode/blob/839a4c53169d33bfe702cc3b1f241983b0df7823/src/agents/sisyphus.ts#L92) is explicit:
 
@@ -75,17 +79,17 @@ Decision -> Clarify: Ambiguous
 
 ## Plan Generation: Prometheus's Three-Phase Workflow
 
-**Prometheus** is the "architect" here. It doesn't handle concrete code tasks — it only produces blueprints.
+**Prometheus** is the "architect" here. It doesn't handle concrete code tasks — it only produces blueprints (structured plans with Todos).
 
 Its workflow has three phases:
 
 1. **Interview Phase**: Checks whether there's enough information for the task. If not, it automatically triggers Explore to search the project structure.
-2. **Plan Generation**: Breaks the task into logically independent stages, assigning an agent category and required skills to each.
+2. **Plan Generation**: Breaks the task into logically independent stages, assigning an agent category and required Skills to each.
 3. **Refinement & Review**: Submits the draft to Momus (the auditor agent) for rigorous review, iterating based on feedback (potentially many rounds).
 
 Prometheus is bound by a hard constraint: the `prometheus-md-only` hook restricts it to writing only `.md` files — it cannot touch any code files. This fundamentally separates planning from execution.
 
-_Hooks here refer to the lifecycle interception mechanism provided by OpenCode's [Plugin API](https://github.com/anomalyco/opencode/blob/aef0e58ad7c8fc299ac7bdf0bb63a54d6ab878e3/packages/plugin/src/index.ts#L148-L226) — similar to Git Hooks — that fire automatically around specific events (message sent, tool called, agent responded). OMO, as an OpenCode plugin, implements 30+ hooks on top of this API. We'll explore hooks in depth in later articles; for now, just remember: OpenCode provides the mechanism, OMO provides the policy._
+_Hooks here refer to the lifecycle interception mechanism provided by OpenCode's [Plugin API](https://github.com/anomalyco/opencode/blob/aef0e58ad7c8fc299ac7bdf0bb63a54d6ab878e3/packages/plugin/src/index.ts#L148-L226) — similar to Git Hooks — that fire automatically around specific events (message sent, tool called, agent responded). OMO, as an OpenCode plugin, implements 30+ hooks on top of this API. We'll dive deeper later; for now, just remember: OpenCode provides the mechanism, OMO builds policy on top of it._
 
 The final plan is a [structured Markdown document](https://github.com/code-yeongyu/oh-my-opencode/blob/839a4c53169d33bfe702cc3b1f241983b0df7823/src/agents/prometheus-prompt.ts#L861-L1194) saved under `.sisyphus/plans/`. Here's a simplified version:
 
@@ -127,8 +131,8 @@ Wave 2 (After Wave 1):
 
 A few key design choices to note:
 
-- Use **Waves** (not Phases) to organize parallel execution.
-- Each task includes a recommended **Agent Profile** (category + skills).
+- The system's term for task phases is **Wave**.
+- Each task includes a recommended **Agent Profile** (Category + Skills).
 - Acceptance criteria must be **agent-executable** — descriptions like "user manually verifies" are explicitly forbidden.
 
 ---
@@ -160,7 +164,7 @@ const AGENT_RESTRICTIONS = {
 };
 ```
 
-This **read-write separation** design is critical — restricting agents' permission scope proactively prevents side effects. In OMO, only Sisyphus and Sisyphus-Junior can modify code; all other agents are read-only.
+This **read-write separation** design is critical — restricting agents' permission scope proactively prevents side effects. In OMO, only Sisyphus and Sisyphus-Junior can modify code; all other agents are all read-only.
 
 Explore and Librarian are launched via `delegate_task` with `run_in_background: true`. OMO implements its own [concurrency manager](https://github.com/code-yeongyu/oh-my-opencode/blob/839a4c53169d33bfe702cc3b1f241983b0df7823/src/features/background-agent/concurrency.ts) that maintains a counting semaphore per Provider/Model combination. For example, it might cap Anthropic at 3 concurrent tasks or Opus at 2. Tasks exceeding the limit are automatically queued and handed off as slots become available, preventing API rate limiting and cost spikes.
 
@@ -168,7 +172,7 @@ Explore and Librarian are launched via `delegate_task` with `run_in_background: 
 
 ## Task Execution: Sisyphus-Junior and delegate_task
 
-With the plan ready and exploration results in hand, Sisyphus begins delegating tasks by phase.
+Once the plan is ready and exploration results have returned, Sisyphus begins delegating tasks by phase.
 
 Each sub-task is dispatched to **Sisyphus-Junior** via `delegate_task`, carrying a `category` (task type) and `load_skills` (skill injection):
 
@@ -213,18 +217,20 @@ But suppose the problem is more severe — Junior fails three times in a row. Si
 3. **Log** all attempted fixes.
 4. **Consult the Oracle**.
 
-Worth noting: Phase 2C is **purely prompt-based** — there's no programmatic counter tracking consecutive failures, and no structural enforcement of the "stop after 3" rule. It relies on the LLM's self-discipline to follow the protocol. Prompt engineering and structural constraints coexist in OMO's current design: the former is flexible but unreliable, while the latter is rigid but has limited coverage.
+Worth noting: Phase 2C is **purely prompt-based** — there's no programmatic counter tracking consecutive failures, and no structural enforcement of the "stop after 3" rule. It relies on the LLM's self-discipline to follow the protocol.
+
+Prompt engineering and structural constraints coexist in OMO's current design: the former is flexible but unreliable, while the latter is rigid but has limited coverage. I think there is room for improvement here, and more structured error reporting and state machines could be introduced at the `delegate_task` level in the future.
 
 ---
 
 ## Advanced Diagnosis: Oracle Intervenes
 
-**Oracle** is the most expensive agent in the system (marked as `EXPENSIVE`), used for high-difficulty debugging and architectural decisions. It has read-only permissions and cannot modify files or delegate tasks. Its system prompt is blunt: "Dense and useful beats long and thorough" — no exhaustive analysis, just actionable advice.
+**Oracle** is the most expensive agent in the system (marked as `EXPENSIVE`), used for high-difficulty debugging and architectural decisions. It has read-only permissions and cannot modify files or delegate tasks. Its system prompt is blunt: "Dense and useful beats long and thorough"—don't just stay at the analysis level, provide actionable advice.
 
 Oracle's output follows a three-layer structure, with explicit triggers for each:
 
 - **Essential / Core** (Always included): Conclusion (2-3 sentences) + Action Plan + Effort Estimation.
-- **Expanded** (Included when relevant): Rationale for the chosen solution + Risks and edge cases to watch for.
+- **Expanded** (Included as appropriate): Rationale for the chosen solution + Risks and edge cases to watch for.
 - **Edge cases** (When truly needed): Escalation triggers + Alternative solution sketches.
 
 The effort estimation uses a four-level scale: `Quick(<1h)`, `Short(1-4h)`, `Medium(1-2d)`, and `Large(3d+)`, allowing downstream agents to anticipate the workload before execution.
@@ -232,7 +238,7 @@ The effort estimation uses a four-level scale: `Quick(<1h)`, `Short(1-4h)`, `Med
 Oracle's invocation design also includes several noteworthy points:
 
 - **Only Sisyphus can call it**: Junior's `call_omo_agent` only allows Explore and Librarian. Oracle must be called via `delegate_task(subagent_type="oracle")`, a tool disabled for Junior. This ensures the decision to "consult an expert" stays with the Orchestrator.
-- **Always synchronous**: Unlike the background asynchronous mode of Explore/Librarian, Oracle calls use `run_in_background: false`. Sisyphus stops and waits for the result. Expensive but necessary, as subsequent decisions depend on Oracle's judgment.
+- **Always synchronous**: Unlike the background asynchronous mode of Explore/Librarian, Oracle calls use `run_in_background: false`. Sisyphus stops and waits for the result, as subsequent decisions depend on Oracle's judgment.
 - **The only agent requiring an "announcement"**: Sisyphus must state "Consulting Oracle for [reason]" before calling it. While all other work starts without preamble, Oracle is the exception, giving the user visibility into high-cost operations.
 
 Back to our scenario: Oracle analyzes Junior's three failed attempts and provides a root-cause diagnosis and repair path. Sisyphus takes the advice as context and re-delegates the fix to Junior. This time, with a clear diagnosis and path forward, Junior succeeds.
@@ -244,6 +250,8 @@ Back to our scenario: Oracle analyzes Junior's three failed attempts and provide
 Throughout the task, two background mechanisms are constantly running:
 
 **Todo Continuation Enforcer**: Checks the Todo list. If it finds uncompleted items, it automatically reactivates the agent to continue working. This ensures the agent doesn't stop halfway through a complex task.
+
+The strict management of Todos is an important reason for OMO to maintain task continuity, especially when the context window is not enough and needs to be compacted, or when switching to a new session, the Todo list acts as a state anchor across sessions.
 
 ```text
 [SYSTEM DIRECTIVE: OH-MY-OPENCODE - TODO_CONTINUATION]
@@ -272,7 +280,7 @@ The task is finished. From a single user command to final delivery, the process 
 
 ## System Overview
 
-Recapping the entire workflow:
+Execution Flow:
 
 ```d2
 shape: sequence_diagram
@@ -317,4 +325,6 @@ This series focuses on OMO rather than OpenCode because **multi-agent orchestrat
 
 ## What's Next
 
-This post walked through OMO's standard workflow. In the next post, we'll dive into the details of `delegate_task`: what kind of prompts Sisyphus constructs when delegating tasks, and what structural means are used to control the behavioral boundaries of sub-agents.
+This post walked through OMO's standard workflow. It is clear that the entire OMO system has a deep understanding of the pain points in multi-agent collaboration scenarios, and has built an effective layered design, work policies, and many detailed engineering optimizations for it.
+
+In the next post, I plan to dive into the details of `delegate_task`: what kind of prompts Sisyphus constructs when delegating tasks, and what structural means are used to control the behavioral boundaries of sub-agents. I believe it is the core hub of OMO's multi-agent collaboration, and understanding it will help us better design our own multi-agent systems.
