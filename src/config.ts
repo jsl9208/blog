@@ -2,7 +2,7 @@ export const SITE = {
   website: "https://jsl-blog.pages.dev/",
   author: "JSL",
   profile: "https://github.com/jsl9208",
-  desc: "Shilong's Tech — AI Agent, AI Infra, B2B ML platforms, big data & analytics",
+  desc: "Shilong's Tech — AI Agent, AI Infra, Enterprise AI/ML platforms, big data & analytics community",
   title: "Shilong's Tech",
   ogImage: "astropaper-og.jpg",
   lightAndDarkMode: true,

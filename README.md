@@ -1,6 +1,6 @@
 # Shilong's Tech Blog
 
-Personal tech blog covering AI Agent, AI Infra, B2B ML platforms, big data & analytics.
+Personal tech blog covering AI Agent, AI Infra, Enterprise AI/ML platforms, big data & analytics.
 
 Live at [jsl-blog.pages.dev](https://jsl-blog.pages.dev/)
 
