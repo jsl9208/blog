@@ -1,5 +1,5 @@
 export const SITE = {
-  website: "https://jsl-blog.pages.dev/",
+  website: "https://blog.jsl.xyz/",
   author: "JSL",
   profile: "https://github.com/jsl9208",
   desc: "Shilong's Tech — AI Agent, AI Infra, Enterprise AI/ML platforms, big data & analytics community",

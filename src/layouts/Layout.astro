@@ -18,6 +18,7 @@ type Props = {
   modDatetime?: Date | null;
   scrollSmooth?: boolean;
   lang?: Locale;
+  tags?: string[];
 };
 
 const {
@@ -31,27 +32,66 @@ const {
   modDatetime,
   scrollSmooth = false,
   lang,
+  tags,
 } = Astro.props;
 
 const htmlLang = lang ?? SITE.lang ?? "en";
 
 const socialImageURL = new URL(ogImage, Astro.url);
 
-const structuredData = {
-  "@context": "https://schema.org",
-  "@type": "BlogPosting",
-  headline: `${title}`,
-  image: `${socialImageURL}`,
-  datePublished: `${pubDatetime?.toISOString()}`,
-  ...(modDatetime && { dateModified: modDatetime.toISOString() }),
-  author: [
-    {
-      "@type": "Person",
-      name: `${author}`,
-      ...(profile && { url: profile }),
-    },
-  ],
-};
+// Compute hreflang alternate URLs for bilingual SEO
+const pathname = Astro.url.pathname;
+const isZh = pathname.startsWith("/zh");
+const enPath = isZh ? pathname.replace(/^\/zh/, "") || "/" : pathname;
+const zhPath = isZh ? pathname : `/zh${pathname === "/" ? "" : pathname}`;
+const enUrl = new URL(enPath, Astro.site);
+const zhUrl = new URL(zhPath, Astro.site);
+
+// Build structured data based on page type
+const structuredData = pubDatetime
+  ? {
+      // Article pages: BlogPosting with full metadata
+      "@context": "https://schema.org",
+      "@type": "BlogPosting",
+      mainEntityOfPage: {
+        "@type": "WebPage",
+        "@id": `${canonicalURL}`,
+      },
+      headline: `${title}`,
+      description: `${description}`,
+      image: `${socialImageURL}`,
+      datePublished: pubDatetime.toISOString(),
+      ...(modDatetime && { dateModified: modDatetime.toISOString() }),
+      author: [
+        {
+          "@type": "Person",
+          name: `${author}`,
+          ...(profile && { url: profile }),
+        },
+      ],
+      publisher: {
+        "@type": "Person",
+        name: SITE.author,
+        url: SITE.website,
+      },
+      ...(tags &&
+        tags.length > 0 && { keywords: tags.join(", ") }),
+      inLanguage: htmlLang,
+    }
+  : {
+      // Non-article pages: WebSite schema
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      name: SITE.title,
+      description: SITE.desc,
+      url: SITE.website,
+      inLanguage: htmlLang,
+      author: {
+        "@type": "Person",
+        name: SITE.author,
+        ...(SITE.profile && { url: SITE.profile }),
+      },
+    };
 ---
 
 <!doctype html>
@@ -73,6 +113,11 @@ const structuredData = {
       preload={[{ subset: "latin", weight: 400, style: "normal" }]}
     />
 
+    <!-- hreflang for bilingual SEO -->
+    <link rel="alternate" hreflang="en" href={enUrl} />
+    <link rel="alternate" hreflang="zh" href={zhUrl} />
+    <link rel="alternate" hreflang="x-default" href={enUrl} />
+
     <!-- General Meta Tags -->
     <title>{title}</title>
     <meta name="title" content={title} />
@@ -85,6 +130,13 @@ const structuredData = {
     <meta property="og:description" content={description} />
     <meta property="og:url" content={canonicalURL} />
     <meta property="og:image" content={socialImageURL} />
+    <meta property="og:type" content={pubDatetime ? "article" : "website"} />
+    <meta property="og:site_name" content={SITE.title} />
+    <meta property="og:locale" content={htmlLang === "zh" ? "zh_CN" : "en_US"} />
+    <meta
+      property="og:locale:alternate"
+      content={htmlLang === "zh" ? "en_US" : "zh_CN"}
+    />
 
     <!-- Article Published/Modified time -->
     {
