@@ -15,8 +15,9 @@ import { slugifyStr } from "@/utils/slugify";
 import IconChevronLeft from "@/assets/icons/IconChevronLeft.svg";
 import IconChevronRight from "@/assets/icons/IconChevronRight.svg";
 import { SITE } from "@/config";
+import Comments from "@/components/Comments.astro";
 
-import type { Locale } from "@/i18n";
+import { getSlugFromId, type Locale } from "@/i18n";
 
 type Props = {
   post: CollectionEntry<"blog">;
@@ -40,6 +41,9 @@ const {
 } = post.data;
 
 const { Content, headings } = await render(post);
+
+// Language-stripped slug so zh and en versions share one Giscus discussion
+const commentTerm = getSlugFromId(post.id);
 
 let ogImageUrl: string | undefined;
 
@@ -133,6 +137,8 @@ const nextPost =
       <BackToTopButton />
 
       <ShareLinks />
+
+      <Comments term={commentTerm} lang={lang} />
 
       <hr class="my-6 border-dashed" />
 

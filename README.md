@@ -2,7 +2,7 @@
 
 Personal tech blog covering AI Agent, AI Infra, Enterprise AI/ML platforms, big data & analytics.
 
-Live at [jsl-blog.pages.dev](https://jsl-blog.pages.dev/)
+Live at [blog.jsl.xyz](https://blog.jsl.xyz/)
 
 ## Tech Stack
 

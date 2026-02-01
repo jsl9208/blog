@@ -57,6 +57,9 @@ export default defineConfig({
     optimizeDeps: {
       exclude: ["@resvg/resvg-js"],
     },
+    server: {
+      cors: true,
+    },
   },
   i18n: {
     locales: ["en", "zh"],

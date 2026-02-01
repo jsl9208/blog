@@ -21,3 +21,15 @@ export const SITE = {
   lang: "en",
   timezone: "Asia/Shanghai",
 } as const;
+
+export const GISCUS = {
+  repo: "jsl9208/blog" as const,
+  repoId: "R_kgDORFOq6g",
+  category: "General",
+  categoryId: "DIC_kwDORFOq6s4C1tFb",
+  mapping: "specific" as const,
+  reactionsEnabled: true,
+  inputPosition: "bottom" as const,
+  lightTheme: "/giscus-light.css",
+  darkTheme: "/giscus-dark.css",
+} as const;
