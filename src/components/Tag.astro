@@ -1,18 +1,21 @@
 ---
 import IconHash from "@/assets/icons/IconHash.svg";
+import type { Locale } from "@/i18n";
 
 type Props = {
   tag: string;
   tagName: string;
   size?: "sm" | "lg";
+  lang?: Locale;
 };
 
-const { tag, tagName, size = "lg" } = Astro.props;
+const { tag, tagName, size = "lg", lang = "en" } = Astro.props;
+const prefix = lang === "en" ? "" : `/${lang}`;
 ---
 
 <li>
   <a
-    href={`/tags/${tag}/`}
+    href={`${prefix}/tags/${tag}/`}
     transition:name={tag}
     class:list={[
       "flex items-center gap-0.5",

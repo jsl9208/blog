@@ -21,7 +21,7 @@ let tags = getUniqueTags(zhPosts);
   <Header lang="zh" />
   <Main pageTitle={ui.tags} pageDesc="文章中使用的所有标签。">
     <ul class="flex flex-wrap gap-6">
-      {tags.map(({ tag, tagName }) => <Tag {tag} {tagName} />)}
+      {tags.map(({ tag, tagName }) => <Tag {tag} {tagName} lang="zh" />)}
     </ul>
   </Main>
   <Footer />
