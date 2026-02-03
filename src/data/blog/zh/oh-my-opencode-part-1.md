@@ -1,6 +1,7 @@
 ---
 author: Shilong Jiang
 pubDatetime: 2026-01-20T00:00:00Z
+modDatetime: 2026-02-01T00:00:00Z
 title: "深入 Oh My OpenCode（1）：从一条指令到一个 PR —— 多 Agent 协作实录"
 featured: true
 draft: false

@@ -1,6 +1,7 @@
 ---
 author: Shilong Jiang
 pubDatetime: 2026-01-20T00:00:00Z
+modDatetime: 2026-02-01T00:00:00Z
 title: "Deep Dive into Oh My OpenCode (1): From One Command to a PR — Multi-Agent Collaboration in Action"
 featured: true
 draft: false

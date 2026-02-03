@@ -11,6 +11,9 @@ import {
 } from "@shikijs/transformers";
 import { transformerFileName } from "./src/utils/transformers/fileName";
 import { SITE } from "./src/config";
+import { getSitemapDates } from "./src/utils/getSitemapDates";
+
+const sitemapDates = getSitemapDates(SITE.website);
 
 // https://astro.build/config
 export default defineConfig({
@@ -18,6 +21,13 @@ export default defineConfig({
   integrations: [
     sitemap({
       filter: page => SITE.showArchives || !page.endsWith("/archives"),
+      serialize: item => {
+        const postDate = sitemapDates.get(item.url);
+        if (postDate) {
+          return { ...item, lastmod: postDate.toISOString() };
+        }
+        return item;
+      },
     }),
     astroD2({
       sketch: true,
